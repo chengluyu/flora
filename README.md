@@ -1,2 +1,15 @@
 # flora
-Yet another programming language.
+Flora is a programming language.
+
+Flora is designed to be general-purpose and strongly expressive.
+
+`flora` the interpreter (or/and compiler) implements Flora. It is written in C++.
+
+## Getting Started
+
+TBD. Language toturial, example and specification goes here.
+
+## Contributing
+
+TBD.
+

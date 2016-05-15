@@ -9,7 +9,7 @@
 namespace flora {
 
 #define TOKEN_LIST(K, T)\
-  K(EndOfSource)\
+  K(EndOfSource, "(end of source)", 0)\
   /* Punctuation marks */\
   T(LeftParenthesis, "(", 0)\
   T(RightParenthesis, ")", 0)\
@@ -110,7 +110,7 @@ namespace flora {
 
 enum class Token : int {
 #define T(name, string, precedence) name,
-  TOKEN_LIST(T),
+  TOKEN_LIST(T, T)
   TOKEN_COUNT
 #undef T
 };
@@ -134,13 +134,13 @@ public:
 
 private:
   // The number of tokens
-  static const int TOKEN_COUNT = static_cast<int>(TOKEN_COUNT);
+  static const int TOKEN_COUNT = static_cast<int>(Token::TOKEN_COUNT);
   // Token information
   static const char *name_[TOKEN_COUNT];
   static const char *literal_[TOKEN_COUNT];
   static const int precedence_[TOKEN_COUNT];
   // Hashtable used to lookup keywords
-  static const std::unordered_map<std::string, Token> lookup_table_;
+  static std::unordered_map<std::string, Token> lookup_table_;
   static void InitializeKeywordLookupTable();
   // Singleton object used to automatically initialize hashtable
   Tokens();

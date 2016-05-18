@@ -2,11 +2,105 @@
 
 namespace flora {
 
+// Public Methods
+
+Scanner::Scanner() {
+
+}
+
+void Scanner::Initialize() {
+  UNIMPLEMENTED();
+}
+
+Token Scanner::Advance() {
+  switch (state_) {
+  case Scanner::State::Uninitialized:
+    ReportScannerError("the scanner is uninitialized");
+    return Token::Illegal;
+
+  case Scanner::State::Running:
+    return Scan();
+
+  case Scanner::State::Recording: {
+    Token token = Scan();
+    records_.push(std::make_pair(token, literal_));
+    return token;
+  }
+
+  case Scanner::State::Restoring: {
+    std::pair<Token, std::string> &token = records_.front();
+    SetTokenLiteral(token.second);
+    if (records_.empty())
+      state_ = Scanner::State::Running;
+    return token.first;
+  }
+
+  case Scanner::State::End:
+    return Token::EndOfSource;
+
+  case Scanner::State::Error:
+    return Token::Illegal;
+  }
+  UNREACHABLE();
+}
+
+void Scanner::SaveBookmark() {
+  // Clean the recording queue
+  while (!records_.empty())
+    records_.pop();
+  // Set state to recording
+  state_ = Scanner::State::Recording;
+}
+
+void Scanner::LoadBookmark() {
+  // Set state to restoring
+  state_ = Scanner::State::Restoring;
+}
+
+void Scanner::ClearBookmark() {
+  // Clean the recording queue
+  while (!records_.empty())
+    records_.pop();
+  // Set state to running
+  state_ = Scanner::State::Running;
+}
+
+
+// Private methods
+
+void Scanner::SetTokenLiteral(const char *literal) {
+  literal_.assign(literal);
+}
+
+void Scanner::SetTokenLiteral(std::string &literal) {
+  literal_ = std::move(literal);
+}
+
+void Scanner::SetTokenLiteral(char literal) {
+  literal_.clear();
+  literal_.push_back(literal);
+}
+
+
+void Scanner::ClearTokenLiteral() {
+  literal_.clear();
+}
+
+void Scanner::ReportScannerError(const char *message) {
+  SetTokenLiteral(message);
+}
+
+void Scanner::MarkEndOfSource() {
+  state_ = Scanner::State::End;
+}
+
+
 Token Scanner::Scan() {
+  ClearTokenLiteral();
   char ch;
   while (true) {
-    switch (ch = Advance()) {
-    case character::EOF:
+    switch (ch = Next()) {
+    case character::EOS:
       MarkEndOfSource();
       return Token::EndOfSource;
     case '\n':
@@ -101,7 +195,7 @@ Token Scanner::Scan() {
         return Token::AssignmentDivision;
       } else if (Match('*')) {
         SkipMultipleLineComment();
-      } else if (Match('//')) {
+      } else if (Match('/')) {
         SkipSingleLineComment();
       } else {
         return Token::Division;
@@ -116,7 +210,7 @@ Token Scanner::Scan() {
     default:
       if (character::IsIdentifierStart(ch)) {
         return ScanIdentifierOrKeyword(ch);
-      } else if (character::IsDigit(ch)) {
+      } else if (character::IsDecimalDigit(ch)) {
         return ScanIntegerOrRealNumber(ch);
       } else {
         ReportScannerError("unknown token");
@@ -126,73 +220,92 @@ Token Scanner::Scan() {
   }
 }
 
-void Scanner::SkipMultipleLineComment() {
+bool Scanner::SkipMultipleLineComment() {
   int cascade = 1;
+  char ch;
   while (true) {
-
+    ch = Next();
+    if (ch == '/') {
+      if (peek == '*') {
+        Next();
+        cascade++;
+      }
+    } else if (ch == '*') {
+      if (peek == '/') {
+        Next();
+        cascade--;
+        if (cascade == 0) break;
+      }
+    } else if (ch == character::EOS) {
+      ReportScannerError("unexpected EOF in multiple line comment");
+      return false;
+    }
   }
+  return true;
 }
 
 void Scanner::SkipSingleLineComment() {
-  while (!character::IsLineFeed(peek) && peek != character::EOF) Advance();
+  while (!character::IsLineFeed(peek) && peek != character::EOS)
+    Next();
 }
 
 Token Scanner::ScanStringLiteral() {
   std::string literal;
   char ch;
   while (true) {
-    ch = Advance();
-    if (ch == character::EOF) {
+    ch = Next();
+    if (ch == character::EOS) {
       ReportScannerError("unexpected EOF in string literal");
       return Token::Illegal;
     } else if (ch == '\\') {
-      literal.append(ScanStringEscape());
+      literal.push_back(ScanStringEscape());
     } else if (ch == '"') {
       break;
     } else {
-      literal.append(ch);
+      literal.push_back(ch);
     }
   }
-  SetStringLiteral(literal);
+  SetTokenLiteral(literal);
   return Token::String;
 }
 
 Token Scanner::ScanCharacterLiteral() {
-  char literal = Advance();
-  if (literal == character::EOF) {
+  char literal = Next();
+  if (literal == character::EOS) {
     ReportScannerError("unexpected EOF in character literal");
     return Token::Illegal;
-  } else if (ch == '\\') {
+  } else if (literal == '\\') {
     literal = ScanCharacterEscape();
   }
   // to ensure that there is only one character in literal
-  if (Advance() != '\'') {
+  if (Next() != '\'') {
     ReportScannerError("too more character in literal");
     return Token::Illegal;
   }
-  SetStringLiteral(literal);
+  SetTokenLiteral(literal);
   return Token::Character;
 }
 
 Token Scanner::ScanIdentifierOrKeyword(char firstChar) {
-  std::string identifier = firstChar;
+  std::string identifier;
+  identifier.push_back(firstChar);
+
   while (character::IsIdentifierBody(peek)) {
-    identifier.append(Advance());
+    identifier.push_back(Next());
   }
   Token token = Tokens::LookupKeyword(identifier);
   if (token != Token::Identifier) SetTokenLiteral(identifier);
   return token;
 }
 
-Token Scanner::ScanIntegerOrRealNumber() {
+Token Scanner::ScanIntegerOrRealNumber(char firstChar) {
   // There are 4 kinds of integer:
   // (1) Hexidecimal integer
   // (2) Decimal integer
   // (3) Octal integer
   // (4) Binary integer
-  // (1), (3) and (4) has a prefix, so we can easily dintinguish
-  char ch = Advance();
-  if (ch == '0') {
+  // (1), (3) and (4) has a prefix, so we can easily dintinguish them
+  if (firstChar == '0') {
     if (peek == 'x') {
       return ScanHexInteger();
     } else if (peek == 'o') {
@@ -200,14 +313,16 @@ Token Scanner::ScanIntegerOrRealNumber() {
     } else if (peek == 'b') {
       return ScanBinaryInteger();
     }
-    while (Match('0'));
+    // Skip leading zeros
+    while (Match('0'))
+      ;
   }
 }
 
 Token Scanner::ScanRealNumber(const std::string *integerPart,
                               bool scannedPeriod = false) {
   std::string number = integerPart ? *integerPart : '0';
-  if (!scannedPeriod)
+  
 }
 
 }

@@ -8,6 +8,7 @@
 #include "checks.h"
 #include "token.h"
 #include "character-predicates.h"
+#include "character-stream.h"
 
 namespace flora {
 
@@ -19,7 +20,7 @@ public:
   Scanner();
   ~Scanner();
   // TODO
-  void Initialize();
+  void Initialize(CharacterStream *stream);
   Token Advance();
   void SaveBookmark();
   void LoadBookmark();
@@ -33,14 +34,16 @@ private:
   std::queue<std::pair<Token, std::string>> records_;
   // The current state of scanner
   State state_;
+  // The stream
+  CharacterStream *stream_;
   // Next character
   int peek;
   // The literal of token
   std::string literal_;
   // Advance next character.
-  char Next();
+  int Next();
   // Returns true if the next character is expected character
-  bool Match(char expected);
+  bool Match(int expected);
   // Set the literal of token
   inline void SetTokenLiteral(const char *literal);
   inline void SetTokenLiteral(std::string &literal);

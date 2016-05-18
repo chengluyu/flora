@@ -5,11 +5,15 @@ namespace flora {
 // Public Methods
 
 Scanner::Scanner() {
-  // TODO
+  state_ = Scanner::State::Uninitialized;
+  stream_ = nullptr;
+  peek = 0;
 }
 
-void Scanner::Initialize() {
-  UNIMPLEMENTED();
+void Scanner::Initialize(CharacterStream *stream) {
+  stream_ = stream;
+  state_ = Scanner::State::Running;
+  peek = stream->Advance();
 }
 
 Token Scanner::Advance() {
@@ -71,14 +75,18 @@ void Scanner::ClearBookmark() {
 
 // Private methods
 
-char Scanner::Next() {
-  // TODO
-  UNIMPLEMENTED();
+int Scanner::Next() {
+  int save = peek;
+  peek = stream_->Advance();
+  return save;
 }
 
-bool Scanner::Match(char expected) {
-  // TODO
-  UNIMPLEMENTED();
+bool Scanner::Match(int expected) {
+  if (expected == peek) {
+    peek = stream_->Advance();
+    return true;
+  }
+  return false;
 }
 
 void Scanner::SetTokenLiteral(const char *literal) {

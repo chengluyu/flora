@@ -11,4 +11,11 @@
   class_name() = delete;\
   NOCOPY_CLASS(class_name)
 
+#define NORETURN [[noreturn]]
+
+#define INLINE(function) inline function
+
+typedef unsigned short uc16;
+typedef signed int uc32;
+
 #endif

@@ -73,10 +73,12 @@ void Scanner::ClearBookmark() {
 
 char Scanner::Next() {
   // TODO
+  UNIMPLEMENTED();
 }
 
 bool Scanner::Match(char expected) {
   // TODO
+  UNIMPLEMENTED();
 }
 
 void Scanner::SetTokenLiteral(const char *literal) {
@@ -332,11 +334,11 @@ Token Scanner::ScanIntegerOrRealNumber(char firstChar) {
   }
   num.push_back(firstChar);
   // Scan the integral part
-  while (IsDecimalDigit(peek)) {
+  while (character::IsDecimalDigit(peek)) {
     num.push_back(firstChar);
   }
   // Real number
-  if (peek == '.' || AsciiToLowerCase(peek) == 'e') {
+  if (peek == '.' || character::AsciiToLowerCase(peek) == 'e') {
     return ScanRealNumber(&num);
   }
   // Integer
@@ -354,8 +356,8 @@ Token Scanner::ScanRealNumber(const std::string *integral_part,
   }
   // Fraction part
   if (Match('.')) {
-    while (IsDecimalDigit(peek)) {
-      num.push_back(firstChar);
+    while (character::IsDecimalDigit(peek)) {
+      num.push_back(Next());
     }
   }
   // Exponent part
@@ -364,12 +366,12 @@ Token Scanner::ScanRealNumber(const std::string *integral_part,
     if (peek == '+' || peek == '-')
       num.push_back(Next());
     // An error circumstance: 1.234E
-    if (!IsDecimalDigit(peek)) {
+    if (!character::IsDecimalDigit(peek)) {
       ReportScannerError("unexpected end of source in real number literal");
-      return Token::Illegal();
+      return Token::Illegal;
     }
-    while (IsDecimalDigit(peek)) {
-      num.push_back(firstChar);
+    while (character::IsDecimalDigit(peek)) {
+      num.push_back(Next());
     }
   }
   SetTokenLiteral(num);
@@ -382,7 +384,7 @@ Token Scanner::ScanRealNumber(const std::string *integral_part,
     num.push_back(ch);\
     if (!checker(peek)) {\
       ReportScannerError("unexpected end of source in integer literal");\
-      return Token::Illegal();\
+      return Token::Illegal;\
     }\
     while (checker(peek))\
       num.push_back(Next());\
@@ -390,8 +392,8 @@ Token Scanner::ScanRealNumber(const std::string *integral_part,
     return Token::Integer;\
   }
 
-SCAN_INTEGER(Hex, 'x', IsHexDigit)
-SCAN_INTEGER(Octal, 'o', IsOctalDigit)
-SCAN_INTEGER(Binary, 'b', IsBinaryDigit)
+SCAN_INTEGER(Hex, 'x', character::IsHexDigit)
+SCAN_INTEGER(Octal, 'o', character::IsOctalDigit)
+SCAN_INTEGER(Binary, 'b', character::IsBinaryDigit)
 
 }

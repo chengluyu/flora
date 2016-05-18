@@ -1,9 +1,11 @@
 #ifndef FLORA_SCANNER_H
 #define FLORA_SCANNER_H
 
-#include <cctype>
+#include <queue>
+#include <utility>
 
 #include "flora.h"
+#include "checks.h"
 #include "token.h"
 #include "character-predicates.h"
 
@@ -18,13 +20,39 @@ public:
   ~Scanner();
   // TODO
   void Initialize();
-  Token Peek();
   Token Advance();
+  void SaveBookmark();
+  void LoadBookmark();
+  void ClearBookmark();
+  std::string GetTokenLiteral();
 private:
+  enum class State {
+    Uninitialized, Running, Recording, Restoring, Error, End
+  };
+  // The recording queue for bookmark function
+  std::queue<std::pair<Token, std::string>> records_;
+  // The current state of scanner
+  State state_;
+  // Next character
+  int peek;
+  // The literal of token
+  std::string literal_;
+  // Advance next character.
+  char Next();
+  // Returns true if the next character is expected character
+  bool Match(char expect);
+  // Set the literal of token
+  inline void SetTokenLiteral(const char *literal);
+  inline void SetTokenLiteral(std::string &literal);
+  inline void SetTokenLiteral(char literal);
+  inline void ClearTokenLiteral();
+  // Report error, call before returning Token::Illegal
+  inline void ReportScannerError(const char *message);
+  inline void MarkEndOfSource();
   // Scan a token
   Token Scan();
-  // Skip comments
-  void SkipMultipleLineComment();
+  // Skip comments, returns true if error occurs
+  bool SkipMultipleLineComment();
   void SkipSingleLineComment();
   // Scan literals and escapees of strings and characters
   Token ScanStringLiteral();
@@ -32,9 +60,9 @@ private:
   char ScanStringEscape();
   char ScanCharacterEscape();
   // Scan identifiers and keywords
-  Token ScanIdentifierOrKeyword();
+  Token ScanIdentifierOrKeyword(char firstChar);
   // Scan integers and real numebers
-  Token ScanIntegerOrRealNumber();
+  Token ScanIntegerOrRealNumber(char firstChar);
   Token ScanRealNumber();
 };
 

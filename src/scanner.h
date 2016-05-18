@@ -40,7 +40,7 @@ private:
   // Advance next character.
   char Next();
   // Returns true if the next character is expected character
-  bool Match(char expect);
+  bool Match(char expected);
   // Set the literal of token
   inline void SetTokenLiteral(const char *literal);
   inline void SetTokenLiteral(std::string &literal);
@@ -63,7 +63,12 @@ private:
   Token ScanIdentifierOrKeyword(char firstChar);
   // Scan integers and real numebers
   Token ScanIntegerOrRealNumber(char firstChar);
-  Token ScanRealNumber();
+  Token ScanRealNumber(const std::string *integral_part,
+                       bool scanned_period = false);
+  // Scan integer in different base
+  Token ScanHexInteger();
+  Token ScanOctalInteger();
+  Token ScanBinaryInteger();
 };
 
 }

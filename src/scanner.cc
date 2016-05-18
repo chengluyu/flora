@@ -5,7 +5,7 @@ namespace flora {
 // Public Methods
 
 Scanner::Scanner() {
-
+  // TODO
 }
 
 void Scanner::Initialize() {
@@ -28,10 +28,13 @@ Token Scanner::Advance() {
   }
 
   case Scanner::State::Restoring: {
+    // Sequeeze the first recorded token
     std::pair<Token, std::string> &token = records_.front();
-    SetTokenLiteral(token.second);
+    records_.pop();
+    // Check if no more recorded tokens
     if (records_.empty())
       state_ = Scanner::State::Running;
+    SetTokenLiteral(token.second);
     return token.first;
   }
 
@@ -68,6 +71,14 @@ void Scanner::ClearBookmark() {
 
 // Private methods
 
+char Scanner::Next() {
+  // TODO
+}
+
+bool Scanner::Match(char expected) {
+  // TODO
+}
+
 void Scanner::SetTokenLiteral(const char *literal) {
   literal_.assign(literal);
 }
@@ -87,6 +98,7 @@ void Scanner::ClearTokenLiteral() {
 }
 
 void Scanner::ReportScannerError(const char *message) {
+  state_ = Scanner::State::Error;
   SetTokenLiteral(message);
 }
 
@@ -237,7 +249,7 @@ bool Scanner::SkipMultipleLineComment() {
         if (cascade == 0) break;
       }
     } else if (ch == character::EOS) {
-      ReportScannerError("unexpected EOF in multiple line comment");
+      ReportScannerError("unexpected end of source in multiple line comment");
       return false;
     }
   }
@@ -305,24 +317,81 @@ Token Scanner::ScanIntegerOrRealNumber(char firstChar) {
   // (3) Octal integer
   // (4) Binary integer
   // (1), (3) and (4) has a prefix, so we can easily dintinguish them
+  std::string num;
   if (firstChar == '0') {
     if (peek == 'x') {
+      Next();
       return ScanHexInteger();
     } else if (peek == 'o') {
+      Next();
       return ScanOctalInteger();
     } else if (peek == 'b') {
+      Next();
       return ScanBinaryInteger();
     }
-    // Skip leading zeros
-    while (Match('0'))
-      ;
   }
+  num.push_back(firstChar);
+  // Scan the integral part
+  while (IsDecimalDigit(peek)) {
+    num.push_back(firstChar);
+  }
+  // Real number
+  if (peek == '.' || AsciiToLowerCase(peek) == 'e') {
+    return ScanRealNumber(&num);
+  }
+  // Integer
+  SetTokenLiteral(num);
+  return Token::Integer;
 }
 
-Token Scanner::ScanRealNumber(const std::string *integerPart,
-                              bool scannedPeriod = false) {
-  std::string number = integerPart ? *integerPart : '0';
-  
+Token Scanner::ScanRealNumber(const std::string *integral_part,
+                              bool scanned_period) {
+  std::string num;
+  if (integral_part) {
+    num = *integral_part;
+  } else {
+    num.push_back('0');
+  }
+  // Fraction part
+  if (Match('.')) {
+    while (IsDecimalDigit(peek)) {
+      num.push_back(firstChar);
+    }
+  }
+  // Exponent part
+  if (peek == 'E' || peek == 'e') {
+    num.push_back(Next());
+    if (peek == '+' || peek == '-')
+      num.push_back(Next());
+    // An error circumstance: 1.234E
+    if (!IsDecimalDigit(peek)) {
+      ReportScannerError("unexpected end of source in real number literal");
+      return Token::Illegal();
+    }
+    while (IsDecimalDigit(peek)) {
+      num.push_back(firstChar);
+    }
+  }
+  SetTokenLiteral(num);
+  return Token::RealNumber;
 }
+
+#define SCAN_INTEGER(base, ch, checker)\
+  Token Scanner::Scan##base##Integer() {\
+    std::string num;\
+    num.push_back(ch);\
+    if (!checker(peek)) {\
+      ReportScannerError("unexpected end of source in integer literal");\
+      return Token::Illegal();\
+    }\
+    while (checker(peek))\
+      num.push_back(Next());\
+    SetTokenLiteral(num);\
+    return Token::Integer;\
+  }
+
+SCAN_INTEGER(Hex, 'x', IsHexDigit)
+SCAN_INTEGER(Octal, 'o', IsOctalDigit)
+SCAN_INTEGER(Binary, 'b', IsBinaryDigit)
 
 }

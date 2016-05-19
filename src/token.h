@@ -94,6 +94,10 @@ namespace flora {
   K(Char, "char", 0)\
   K(Double, "double", 0)\
   K(Float, "float", 0)\
+  K(Int, "int", 0)\
+  K(Long, "long", 0)\
+  K(Short, "short", 0)\
+  K(Unsigned, "unsigned", 0)\
   /* Literals */\
   K(Null, "null", 0)\
   K(True, "true", 0)\

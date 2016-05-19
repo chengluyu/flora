@@ -14,16 +14,16 @@ public:
 
   CharacterStream() = default;
   virtual ~CharacterStream() = default;
-  virtual char Advance() = 0;
+  virtual char32_t Advance() = 0;
 };
 
-class FileCharacterStream {
+class FileCharacterStream : public CharacterStream {
 public:
   NOCOPY_CLASS(FileCharacterStream)
 
   FileCharacterStream(const char *filename) : stream_(filename) { }
 
-  virtual int Advance() {
+  virtual char32_t Advance() {
     if (!stream_) return character::EOS;
     return stream_.get();
   }

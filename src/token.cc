@@ -4,7 +4,7 @@ namespace flora {
 
 Token Tokens::LookupKeyword(const std::string &identifier) {
   auto result = lookup_table_.find(identifier);
-  return result == lookup_table_.end() ? result->second : Token::Identifier;
+  return result == lookup_table_.end() ? Token::Identifier : result->second;
 }
 
 #define T(name, literal, precedence) #name,
@@ -38,5 +38,7 @@ void Tokens::InitializeKeywordLookupTable() {
 Tokens::Tokens() {
   InitializeKeywordLookupTable();
 }
+
+Tokens Tokens::singleton;
 
 }

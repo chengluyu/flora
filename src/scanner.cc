@@ -365,7 +365,8 @@ Token Scanner::ScanIdentifierOrKeyword(char32_t firstChar) {
     identifier.push_back(Next());
   }
   Token token = Tokens::LookupKeyword(identifier);
-  if (token != Token::Identifier) SetTokenLiteral(identifier);
+  if (token == Token::Identifier)
+    SetTokenLiteral(identifier);
   return token;
 }
 

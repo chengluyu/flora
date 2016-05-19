@@ -392,7 +392,7 @@ Token Scanner::ScanIntegerOrRealNumber(char32_t firstChar) {
   num.push_back(firstChar);
   // Scan the integral part
   while (character::IsDecimalDigit(peek)) {
-    num.push_back(firstChar);
+    num.push_back(Next());
   }
   // Real number
   if (peek == '.' || character::AsciiToLowerCase(peek) == 'e') {

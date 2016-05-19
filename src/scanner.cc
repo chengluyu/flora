@@ -98,7 +98,7 @@ bool Scanner::Match(char32_t expected) {
 }
 
 void Scanner::SetTokenLiteral(const char *literal) {
-  literal_.assign(literal);
+  literal_ = literal;
 }
 
 void Scanner::SetTokenLiteral(std::string &literal) {
@@ -296,6 +296,7 @@ Token Scanner::ScanStringLiteral() {
       break;
     } else if (ch == '\n') {
       ReportScannerError("unexpected line feed in string literal");
+      return Token::Illegal;
     } else {
       literal.push_back(ch);
     }

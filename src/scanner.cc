@@ -294,6 +294,8 @@ Token Scanner::ScanStringLiteral() {
       literal.push_back(ch);
     } else if (ch == '"') {
       break;
+    } else if (ch == '\n') {
+      ReportScannerError("unexpected line feed in string literal");
     } else {
       literal.push_back(ch);
     }
@@ -311,6 +313,9 @@ Token Scanner::ScanCharacterLiteral() {
     literal = ScanCharacterEscape();
     if (literal == character::EOS)
       return Token::Illegal;
+  } else if (literal == '\n') {
+    ReportScannerError("unexpected line feed in character literal");
+    return Token::Illegal;
   }
   // to ensure that there is only one character in literal
   if (Next() != '\'') {

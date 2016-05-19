@@ -5,7 +5,7 @@ namespace flora {
 namespace character {
 
 // End of source
-const int EOS = -1;
+const char32_t EOS = -1;
 
 // Unicode-ready character predicates
 

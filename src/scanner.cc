@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "scanner.h"
 
 namespace flora {
@@ -8,6 +9,10 @@ Scanner::Scanner() {
   state_ = Scanner::State::Uninitialized;
   stream_ = nullptr;
   peek = 0;
+}
+
+Scanner::~Scanner() {
+  
 }
 
 void Scanner::Initialize(CharacterStream *stream) {
@@ -72,16 +77,19 @@ void Scanner::ClearBookmark() {
   state_ = Scanner::State::Running;
 }
 
+const std::string& Scanner::GetTokenLiteral() {
+  return literal_;
+}
 
 // Private methods
 
-int Scanner::Next() {
-  int save = peek;
+char32_t Scanner::Next() {
+  char32_t save = peek;
   peek = stream_->Advance();
   return save;
 }
 
-bool Scanner::Match(int expected) {
+bool Scanner::Match(char32_t expected) {
   if (expected == peek) {
     peek = stream_->Advance();
     return true;
@@ -118,8 +126,9 @@ void Scanner::MarkEndOfSource() {
 
 
 Token Scanner::Scan() {
+  DEBUG_LOG("Scanning...");
   ClearTokenLiteral();
-  char ch;
+  char32_t ch;
   while (true) {
     switch (ch = Next()) {
     case character::EOS:
@@ -273,14 +282,17 @@ void Scanner::SkipSingleLineComment() {
 
 Token Scanner::ScanStringLiteral() {
   std::string literal;
-  char ch;
+  char32_t ch;
   while (true) {
     ch = Next();
     if (ch == character::EOS) {
       ReportScannerError("unexpected EOF in string literal");
       return Token::Illegal;
     } else if (ch == '\\') {
-      literal.push_back(ScanStringEscape());
+      ch = ScanCharacterEscape();
+      if (ch == character::EOS)
+        return Token::Illegal;
+      literal.push_back(ch);
     } else if (ch == '"') {
       break;
     } else {
@@ -292,12 +304,14 @@ Token Scanner::ScanStringLiteral() {
 }
 
 Token Scanner::ScanCharacterLiteral() {
-  char literal = Next();
+  char32_t literal = Next();
   if (literal == character::EOS) {
     ReportScannerError("unexpected EOF in character literal");
     return Token::Illegal;
   } else if (literal == '\\') {
     literal = ScanCharacterEscape();
+    if (literal == character::EOS)
+      return Token::Illegal;
   }
   // to ensure that there is only one character in literal
   if (Next() != '\'') {
@@ -308,7 +322,42 @@ Token Scanner::ScanCharacterLiteral() {
   return Token::Character;
 }
 
-Token Scanner::ScanIdentifierOrKeyword(char firstChar) {
+char32_t Scanner::ScanCharacterEscape() {
+  char32_t codepoint = 0;
+  switch (peek) {
+  case 'n': return '\n';
+  case 'r': return '\r';
+  case 't': return '\t';
+  case '\\': return '\\';
+  case '\'': return '\'';
+  case '\"': return '\"';
+  case 'u':
+    Next();
+    while (character::IsDecimalDigit(peek)) {
+      codepoint *= 10;
+      codepoint += peek - '0';
+      Next();
+    }
+    return codepoint;
+  case 'x':
+    Next();
+    while (character::IsHexDigit(peek)) {
+      codepoint *= 16;
+      if (character::IsDecimalDigit(peek)) {
+        codepoint += peek - '0';
+      } else {
+        codepoint += 10 + character::AsciiToLowerCase(peek) - 'a';
+      }
+      Next();
+    }
+    return codepoint;
+  default:
+    ReportScannerError("illegal character escape");
+    return character::EOS;
+  }
+}
+
+Token Scanner::ScanIdentifierOrKeyword(char32_t firstChar) {
   std::string identifier;
   identifier.push_back(firstChar);
 
@@ -320,7 +369,7 @@ Token Scanner::ScanIdentifierOrKeyword(char firstChar) {
   return token;
 }
 
-Token Scanner::ScanIntegerOrRealNumber(char firstChar) {
+Token Scanner::ScanIntegerOrRealNumber(char32_t firstChar) {
   // There are 4 kinds of integer:
   // (1) Hexidecimal integer
   // (2) Decimal integer

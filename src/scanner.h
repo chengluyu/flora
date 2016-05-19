@@ -25,7 +25,7 @@ public:
   void SaveBookmark();
   void LoadBookmark();
   void ClearBookmark();
-  std::string GetTokenLiteral();
+  const std::string& GetTokenLiteral();
 private:
   enum class State {
     Uninitialized, Running, Recording, Restoring, Error, End
@@ -37,13 +37,13 @@ private:
   // The stream
   CharacterStream *stream_;
   // Next character
-  int peek;
+  char32_t peek;
   // The literal of token
   std::string literal_;
   // Advance next character.
-  int Next();
+  char32_t Next();
   // Returns true if the next character is expected character
-  bool Match(int expected);
+  bool Match(char32_t expected);
   // Set the literal of token
   inline void SetTokenLiteral(const char *literal);
   inline void SetTokenLiteral(std::string &literal);
@@ -60,12 +60,11 @@ private:
   // Scan literals and escapees of strings and characters
   Token ScanStringLiteral();
   Token ScanCharacterLiteral();
-  char ScanStringEscape();
-  char ScanCharacterEscape();
+  char32_t ScanCharacterEscape();
   // Scan identifiers and keywords
-  Token ScanIdentifierOrKeyword(char firstChar);
+  Token ScanIdentifierOrKeyword(char32_t firstChar);
   // Scan integers and real numebers
-  Token ScanIntegerOrRealNumber(char firstChar);
+  Token ScanIntegerOrRealNumber(char32_t firstChar);
   Token ScanRealNumber(const std::string *integral_part,
                        bool scanned_period = false);
   // Scan integer in different base

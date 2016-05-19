@@ -13,7 +13,7 @@ const char *Tokens::name_[Tokens::TOKEN_COUNT] = {
 };
 #undef T
 
-#define T(name, literal, precedence) #literal,
+#define T(name, literal, precedence) literal,
 const char *Tokens::literal_[Tokens::TOKEN_COUNT] = {
   TOKEN_LIST(T, T)
 };

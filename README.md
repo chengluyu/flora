@@ -13,3 +13,6 @@ TBD. Language toturial, example and specification goes here.
 
 TBD.
 
+## License (MIT)
+
+See LICENSE.

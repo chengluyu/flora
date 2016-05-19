@@ -126,7 +126,6 @@ void Scanner::MarkEndOfSource() {
 
 
 Token Scanner::Scan() {
-  DEBUG_LOG("Scanning...");
   ClearTokenLiteral();
   char32_t ch;
   while (true) {

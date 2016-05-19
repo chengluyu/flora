@@ -6,7 +6,7 @@
 
 #include "flora.h"
 
-NORETURN void flora_fatal(const char *file, int line, const char *message) {
+NORETURN static void flora_fatal(const char *file, int line, const char *message) {
   std::printf("FATAL ERROR at line %d in file '%s': %s", line, file, message);
   std::abort();
 }

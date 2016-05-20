@@ -2,6 +2,7 @@
 #define FLORA_PARSER_H
 
 #include "flora.h"
+#include "ast.h"
 #include "token.h"
 #include "scanner.h"
 
@@ -15,6 +16,8 @@ public:
 
   Parser();
   ~Parser();
+
+  
 
 private:
 
@@ -36,11 +39,10 @@ private:
 
   Scope* NewScope();
 
-  void ReportError(const char *message, Array<const char*> args);
-  void ReportErrorAt(Scanner::Location location,
-                     const char *message,
-                     Array<const char*> args);
+  void ReportError(const char *message);
   void ReportUnexpectedToken(Token expected);
+
+  void ParseProgram(bool &ok);
 
   NamespaceDeclararion* ParseNamespaceDeclaration(bool &ok);
   ClassDeclararion* ParseClassDeclaration(bool &ok);

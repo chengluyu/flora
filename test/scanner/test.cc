@@ -23,7 +23,7 @@ int main(int argc, char const *argv[]) {
     FileCharacterStream *stream = new FileCharacterStream(test_cases[i]);
     Scanner *scanner = new Scanner();
     scanner->Initialize(stream);
-    std::cout << "Strat scanning..." << std::endl;
+    std::cout << "Start scanning..." << std::endl;
     while (true) {
       Token tok = scanner->Advance();
       std::cout << Tokens::Name(tok) << " (\"";
